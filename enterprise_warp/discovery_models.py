@@ -95,7 +95,7 @@ class DiscoveryModels(EnterpriseModels):
     noise, associated with pulsar rotational irregularities.
     """
     nfreqs = self.option_nfreqs(option, sel_func_name=None)
-    pl = ds.powerlaw
+    pl = ds.__dict__[option["psd"]] #ds.powerlaw
 
     sn = ds.makegp_fourier(self.psr, pl, components=nfreqs, name='red_noise')
     return sn
@@ -107,7 +107,7 @@ class DiscoveryModels(EnterpriseModels):
     as ~ 1/nu^2.
     """
     nfreqs = self.option_nfreqs(option, sel_func_name=None)
-    pl = ds.powerlaw
+    pl = ds.__dict__[option["psd"]] #ds.powerlaw
 
     dmn = ds.makegp_fourier(self.psr, pl, components=nfreqs, fourierbasis=ds.dmfourierbasis, name='dm_gp')
     return dmn

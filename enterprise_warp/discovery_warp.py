@@ -38,7 +38,7 @@ def init_pta_discovery(params_all):
     for pnum, psr in enumerate(params_all.psrs):
       psr_model = []
       psr_model += [psr.residuals]
-      psr_model += [ds.makegp_timing(psr, svd=True)]
+      psr_model += [ds.makegp_timing(psr, svd=True, variance=1e-12)] #variance=1e-12 only needed for cw model
 
       # Pulsar-specific noise models
       singlepsr_model = params_all.noise_model_obj(psr=psr, params=params)

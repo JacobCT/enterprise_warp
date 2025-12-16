@@ -70,6 +70,7 @@ from packaging.version import Version
 import inspect
 import types
 import sys
+import jax.numpy as jnp
 
 class EnterpriseModels(object):
   """
@@ -492,8 +493,8 @@ class EnterpriseModels(object):
       if not type(self.psr) is list:
         raise ValueError('Expecting a list of enterprise.pulsar.Pulsar objects \
                           in self.psr for a common signal')
-      tmin_global = np.min([np.min(pp.toas) for pp in self.psr])
-      tmax_global = np.max([np.max(pp.toas) for pp in self.psr])
+      tmin_global = jnp.min([np.min(pp.toas) for pp in self.psr])
+      tmax_global = jnp.max([np.max(pp.toas) for pp in self.psr])
       tspan = tmax_global - tmin_global
     else:
       if sel_func_name is None:
@@ -502,7 +503,7 @@ class EnterpriseModels(object):
         selfunc = self.__dict__[sel_func_name]
       selection_mask = toa_mask_from_selection_function(self.psr, selfunc)
       toas = self.psr.toas[selection_mask]
-      tspan = np.max(toas) - np.min(toas)
+      tspan = jnp.max(toas) - jnp.min(toas)
 
     return tspan
 
@@ -549,9 +550,9 @@ def interpret_white_noise_prior(prior):
   Adding only one numbers sets prior to be a constant, while two numbers
   are interpreted as Uniform prior bounds.
   """
-  if not np.isscalar(prior):
+  if not jnp.isscalar(prior):
     return parameter.Uniform(prior[0],prior[1])
-  elif np.isscalar(prior):
+  elif jnp.isscalar(prior):
     return parameter.Constant(prior)
   else:
     raise ValueError('Unknown prior ', prior)
@@ -594,9 +595,9 @@ def regularized_powerlaw(f, log10_A=-16, gamma=5, components=2, min_psd_df=-20.)
     min_psd_df=1e-20 corresponds to psd=1e-21 times df=1e-9
     For the reference on PSDs and sensitivity, see Goncharov, Thrane, Shannon (2022).
     """
-    df = np.diff(np.concatenate((np.array([0]), f[::components])))
+    df = jnp.diff(jnp.concatenate((jnp.array([0]), f[::components])))
     psd_df =  (
-        (10**log10_A) ** 2 / 12.0 / np.pi**2 * const.fyr ** (gamma - 3) * f ** (-gamma) * np.repeat(df, components)
+        (10**log10_A) ** 2 / 12.0 / jnp.pi**2 * const.fyr ** (gamma - 3) * f ** (-gamma) * jnp.repeat(df, components)
     )
     psd_df[psd_df<=10**(min_psd_df)] = 10**(min_psd_df)
     return psd_df
@@ -608,20 +609,19 @@ def powerlaw_bpl(f, log10_A=-16, gamma=5, fc=-9, components=2):
     `arXiv:1910.05961 <https://arxiv.org/abs/1910.05961>`__
     If fc < 0, lg(fc) is assumed instead of fc.
     """
-    df = np.diff(np.concatenate((np.array([0]), f[::components])))
+    df = jnp.diff(jnp.concatenate((jnp.array([0]), f[::components])))
     if fc < 0 : fc = 10**fc
-    return ((10**log10_A)**2 / 12.0 / np.pi**2 *
-            const.fyr**(-3) * ((f+fc)/const.fyr)**(-gamma) * np.repeat(df, components))
+    return ((10**log10_A)**2 / 12.0 / jnp.pi**2 *
+            const.fyr**(-3) * ((f+fc)/const.fyr)**(-gamma) * jnp.repeat(df, components))
 
 @parameter_function
 def hd_orf_noauto(pos1, pos2):
     """Hellings & Downs spatial correlation function."""
-    if np.all(pos1 == pos2):
+    if jnp.all(pos1 == pos2):
         return 0
     else:
-        omc2 = (1 - np.dot(pos1, pos2)) / 2
-        return 1.5 * omc2 * np.log(omc2) - 0.25 * omc2 + 0.5
-
+        omc2 = (1 - jnp.dot(pos1, pos2)) / 2
+        return 1.5 * omc2 * jnp.log(omc2) - 0.25 * omc2 + 0.5
 # Selection functions
 
 def selection_factory(new_selection_name):
